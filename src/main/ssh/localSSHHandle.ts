@@ -40,19 +40,27 @@ const translations = {
   }
 }
 
+// Cache for user language to avoid repeated async calls
+let cachedUserLanguage: string | null = null
+
 // Function to get user's language preference
 const getUserLanguage = async (): Promise<string> => {
+  if (cachedUserLanguage) {
+    return cachedUserLanguage
+  }
   try {
     const userConfig = await getUserConfig()
-    return userConfig?.language || 'zh-CN'
+    cachedUserLanguage = userConfig?.language || 'zh-CN'
+    return cachedUserLanguage
   } catch {
-    return 'zh-CN'
+    cachedUserLanguage = 'zh-CN'
+    return cachedUserLanguage
   }
 }
 
 // Function to get translated text
 const getTranslation = async (key: string, lang?: string): Promise<string> => {
-  const language = lang || (await getUserLanguage())
+  const language = lang || (cachedUserLanguage || (await getUserLanguage()))
   return translations[language]?.[key] || translations['zh-CN'][key] || key
 }
 
@@ -108,9 +116,30 @@ const getDefaultShell = (): string => {
   const platform = os.platform()
   switch (platform) {
     case 'win32':
-      return process.env.SHELL || findExecutable(['pwsh.exe', 'powershell.exe', 'cmd.exe']) || 'cmd.exe'
+      // Prefer environment variable, then try common paths without execSync
+      if (process.env.SHELL) {
+        return process.env.SHELL
+      }
+      // Try common paths directly without execSync for faster startup
+      const systemRoot = process.env.SYSTEMROOT || 'C:\\Windows'
+      const cmdPath = path.join(systemRoot, 'System32', 'cmd.exe')
+      if (fs.existsSync(cmdPath)) {
+        return cmdPath
+      }
+      return 'cmd.exe'
     case 'darwin':
-      return process.env.SHELL || findExecutable(['/bin/zsh', '/bin/bash']) || '/bin/bash'
+      // Prefer environment variable, then try common paths
+      if (process.env.SHELL) {
+        return process.env.SHELL
+      }
+      // Try common shells without execSync
+      if (fs.existsSync('/bin/zsh')) {
+        return '/bin/zsh'
+      }
+      if (fs.existsSync('/bin/bash')) {
+        return '/bin/bash'
+      }
+      return '/bin/bash'
     case 'linux':
     default:
       return process.env.SHELL || '/bin/bash'
@@ -201,6 +230,9 @@ const getAvailableShells = async (): Promise<LocalShellsResult> => {
   const defaultShell = getDefaultShell()
   localLogger.debug('System default shell detected', { event: 'terminal.shell', shell: defaultShell })
 
+  // Cache translation result to avoid repeated async calls
+  const localhostTranslation = await getTranslation('localhost')
+
   // Define shell candidates based on platform
   let candidates: { name: string; path: string }[] = []
 
@@ -245,8 +277,8 @@ const getAvailableShells = async (): Promise<LocalShellsResult> => {
         title: candidate.name,
         ip: '127.0.0.1',
         uuid: actualPath, // Use shell path as uuid
-        group_name: await getTranslation('localhost'),
-        label: await getTranslation('localhost'),
+        group_name: localhostTranslation,
+        label: localhostTranslation,
         authType: '',
         port: 0,
         username: '',
@@ -260,7 +292,7 @@ const getAvailableShells = async (): Promise<LocalShellsResult> => {
 
   return {
     key: 'localTerm',
-    title: await getTranslation('localhost'),
+    title: localhostTranslation,
     children: shells
   }
 }
