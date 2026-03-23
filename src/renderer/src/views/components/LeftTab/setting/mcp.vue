@@ -1,5 +1,8 @@
 <template>
-  <div class="mcp-container">
+  <div
+    class="mcp-container"
+    :class="{ 'mcp-container--wallpaper': useWallpaperBackground }"
+  >
     <a-card
       :bordered="false"
       class="mcp-toolbar-card"
@@ -220,6 +223,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Modal, notification } from 'ant-design-vue'
+import { userConfigStore } from '@/store/userConfigStore'
 import { mcpConfigService } from '@/services/mcpService'
 import { useI18n } from 'vue-i18n'
 import eventBus from '@/utils/eventBus'
@@ -228,6 +232,12 @@ import type { McpServer } from '@shared/mcp'
 
 const logger = createRendererLogger('settings.mcp')
 const { t } = useI18n()
+
+const configStore = userConfigStore()
+const useWallpaperBackground = computed(() => {
+  const bg = configStore.userConfig.background
+  return bg.mode === 'image' && Boolean(bg.image)
+})
 
 const servers = ref<McpServer[]>([])
 
@@ -425,6 +435,42 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   background-color: var(--bg-color);
   color: var(--text-color);
+}
+
+.mcp-container--wallpaper {
+  background-color: transparent;
+
+  .mcp-toolbar-card,
+  .server-card {
+    background-color: transparent;
+
+    :deep(.ant-card-body) {
+      background-color: rgba(30, 30, 30, 0.48);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  .server-card.server-card-loading :deep(.ant-card-body)::after {
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+  }
+}
+
+:global(html.theme-light) .mcp-container--wallpaper {
+  .mcp-toolbar-card,
+  .server-card {
+    :deep(.ant-card-body) {
+      background-color: rgba(255, 255, 255, 0.52);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  .server-card.server-card-loading :deep(.ant-card-body)::after {
+    background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.04) 50%, transparent 100%);
+  }
 }
 
 .mcp-toolbar-card {

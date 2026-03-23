@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import McpComponent from '../mcp.vue'
 import type { McpServer } from '@shared/mcp'
 import { Modal, notification } from 'ant-design-vue'
 import eventBus from '@/utils/eventBus'
 import { mcpConfigService } from '@/services/mcpService'
+import { userConfigStore } from '@/store/userConfigStore'
 
 // Mock ant-design-vue components
 vi.mock('ant-design-vue', () => ({
@@ -75,7 +77,20 @@ const mockWindowApi = {
 }
 
 describe('McpComponent', () => {
+  let pinia: ReturnType<typeof createPinia>
+
   beforeEach(() => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+
+    const store = userConfigStore()
+    store.$patch({
+      userConfig: {
+        ...store.userConfig,
+        background: { image: '', opacity: 0.8, brightness: 1.0, mode: 'none' }
+      }
+    })
+
     // Setup window.api mock
     global.window = global.window || ({} as Window & typeof globalThis)
     ;(global.window as unknown as { api: typeof mockWindowApi }).api = mockWindowApi
@@ -100,6 +115,7 @@ describe('McpComponent', () => {
   const createWrapper = (options = {}) => {
     return mount(McpComponent, {
       global: {
+        plugins: [pinia],
         stubs: {
           'a-card': {
             template: '<div class="a-card"><div class="ant-card-body"><slot /></div></div>'
@@ -204,6 +220,39 @@ describe('McpComponent', () => {
       expect(wrapper.find('.mcp-container').exists()).toBe(true)
       expect(wrapper.find('.mcp-toolbar').exists()).toBe(true)
       expect(wrapper.find('.toolbar-title').text()).toBe('MCP Servers')
+    })
+
+    it('should add wallpaper layout class when background image mode is active', async () => {
+      const store = userConfigStore()
+      store.updateBackgroundMode('image')
+      store.updateBackgroundImage('system-bg:1')
+
+      const wrapper = createWrapper()
+      await nextTick()
+
+      expect(wrapper.find('.mcp-container').classes()).toContain('mcp-container--wallpaper')
+    })
+
+    it('should not add wallpaper layout class when background mode is not image', async () => {
+      const store = userConfigStore()
+      store.updateBackgroundMode('none')
+      store.updateBackgroundImage('')
+
+      const wrapper = createWrapper()
+      await nextTick()
+
+      expect(wrapper.find('.mcp-container').classes()).not.toContain('mcp-container--wallpaper')
+    })
+
+    it('should not add wallpaper layout class when image mode has no image path', async () => {
+      const store = userConfigStore()
+      store.updateBackgroundMode('image')
+      store.updateBackgroundImage('')
+
+      const wrapper = createWrapper()
+      await nextTick()
+
+      expect(wrapper.find('.mcp-container').classes()).not.toContain('mcp-container--wallpaper')
     })
 
     it('should show empty state when no servers are configured', async () => {
