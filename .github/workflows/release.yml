@@ -1,0 +1,241 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify Release Inputs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Fix package-lock.json
+        run: node scripts/patch-package-lock.js
+
+      - name: Validate release tag
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          EXPECTED_TAG="v$VERSION"
+
+          if [ "$GITHUB_REF_NAME" != "$EXPECTED_TAG" ]; then
+            echo "Tag mismatch: expected $EXPECTED_TAG but got $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: Run linting
+        run: npx eslint . --max-warnings=0
+
+      - name: Run type checking
+        run: npm run typecheck
+
+  # build:
+  #   name: Build (${{ matrix.label }})
+  #   runs-on: ${{ matrix.os }}
+  #   needs: verify
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - os: ubuntu-latest
+  #           label: Linux
+  #           artifact_name: release-linux
+  #           build_commands: |
+  #             npm run build:linux:cn -- --publish never
+  #             npm run build:linux:global -- --publish never
+  #         - os: windows-latest
+  #           label: Windows
+  #           artifact_name: release-windows
+  #           build_commands: |
+  #             npm run build:win:cn -- --publish never
+  #             npm run build:win:global -- --publish never
+  #
+  #   steps:
+  #     - name: Enable long paths (Windows)
+  #       if: runner.os == 'Windows'
+  #       run: git config --system core.longpaths true
+  #
+  #     - name: Checkout code
+  #       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+  #       with:
+  #         config: core.longpaths=true
+  #
+  #     - name: Use Node.js 22.x
+  #       uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
+  #       with:
+  #         node-version: 22.x
+  #         cache: 'npm'
+  #
+  #     - name: Fix package-lock.json
+  #       run: node scripts/patch-package-lock.js
+  #
+  #     - name: Install dependencies
+  #       run: npm ci --prefer-offline
+  #
+  #     - name: Build release packages
+  #       shell: bash
+  #       run: ${{ matrix.build_commands }}
+  #
+  #     - name: Upload build artifacts
+  #       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+  #       with:
+  #         name: ${{ matrix.artifact_name }}
+  #         if-no-files-found: error
+  #         path: |
+  #           dist/**/*.exe
+  #           dist/**/*.dmg
+  #           dist/**/*.zip
+  #           dist/**/*.AppImage
+  #           dist/**/*.deb
+  #           dist/**/latest*.yml
+  #           dist/**/*.blockmap
+
+  build-macos:
+    name: Build (macOS)
+    runs-on: macos-latest
+    needs: verify
+    environment: release
+    env:
+      CSC_LINK: ${{ secrets.MAC_CERT_BASE64 }}
+      CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Fix package-lock.json
+        run: node scripts/patch-package-lock.js
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline
+
+      - name: Build release packages
+        shell: bash
+        run: |
+          npm run build:mac:cn -- --publish never
+          npm run build:mac:global -- --publish never
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+        with:
+          name: release-macos
+          if-no-files-found: error
+          path: |
+            dist/**/*.exe
+            dist/**/*.dmg
+            dist/**/*.zip
+            dist/**/*.AppImage
+            dist/**/*.deb
+            dist/**/latest*.yml
+            dist/**/*.blockmap
+
+  release:
+    name: Publish Draft Release
+    runs-on: ubuntu-latest
+    needs:
+      - build-macos
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      # - name: Download Linux artifacts
+      #   uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      #   with:
+      #     name: release-linux
+      #     path: release-assets/release-linux
+      #
+      # - name: Download Windows artifacts
+      #   uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+      #   with:
+      #     name: release-windows
+      #     path: release-assets/release-windows
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-macos
+          path: release-assets/release-macos
+
+      - name: Prepare release upload directory
+        shell: bash
+        run: |
+          mkdir -p release-upload
+          count=0
+
+          while IFS= read -r -d '' file; do
+            rel_path="${file#release-assets/}"
+            target_name="$(basename "$file")"
+
+            # Keep release asset names unique without mutating the original build outputs.
+            if [[ "$target_name" == latest*.yml ]]; then
+              target_name="${rel_path//\//-}"
+            elif [ -e "release-upload/$target_name" ]; then
+              target_name="${rel_path//\//-}"
+            fi
+
+            cp "$file" "release-upload/$target_name"
+            count=$((count + 1))
+          done < <(find release-assets -type f -print0 | sort -z)
+
+          if [ "$count" -eq 0 ]; then
+            echo "No release assets found" >&2
+            exit 1
+          fi
+
+          echo "Prepared $count asset(s) for upload"
+          ls -la release-upload
+
+      - name: Ensure draft release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            IS_DRAFT=$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft)
+            echo "Release $GITHUB_REF_NAME already exists (draft=$IS_DRAFT)."
+          else
+            gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --generate-notes
+          fi
+
+      - name: Upload assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          mapfile -d '' files < <(find release-upload -maxdepth 1 -type f -print0 | sort -z)
+
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No uploadable release assets found" >&2
+            exit 1
+          fi
+
+          gh release upload "$GITHUB_REF_NAME" "${files[@]}" --clobber
