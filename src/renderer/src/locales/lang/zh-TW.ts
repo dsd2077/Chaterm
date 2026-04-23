@@ -98,6 +98,7 @@ export default {
     pleaseInputPrivateKey: '請輸入私鑰',
     localhost: '本地主機',
     favoriteBar: '收藏欄',
+    recentConnections: '最近連接',
     executeCommandToAllWindows: '執行命令到全部視窗',
     broadcastTo: '廣播到 {count} 個終端',
     reloadAliasDataFailed: '重新加載別名數據失敗',
@@ -622,7 +623,8 @@ export default {
       fontSizeDecrease: '字體縮小',
       toggleLayout: '切換布局（Terminal/Agents）',
       toggleAgentsLeftSidebar: '切換Agents布局左側邊欄',
-      switchAiMode: '切換AI模式'
+      switchAiMode: '切換AI模式',
+      aiSuggestCommand: 'AI命令推薦'
     },
     hints: {
       sendOrToggleAi: '與AI對話',

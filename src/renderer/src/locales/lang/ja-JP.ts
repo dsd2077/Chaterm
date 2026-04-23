@@ -98,6 +98,7 @@ export default {
     pleaseInputPrivateKey: '秘密鍵を入力してください',
     localhost: 'ローカルホスト',
     favoriteBar: 'お気に入り',
+    recentConnections: '最近の接続',
     executeCommandToAllWindows: 'すべてのウィンドウでコマンドを実行',
     broadcastTo: '{count} 個のターミナルにブロードキャスト',
     reloadAliasDataFailed: 'エイリアスデータの再読み込みに失敗しました',
@@ -631,7 +632,8 @@ export default {
       fontSizeDecrease: 'フォントサイズを減らす',
       toggleLayout: 'レイアウトを切り替え(ターミナル/エージェント)',
       toggleAgentsLeftSidebar: 'エージェント左サイドバーを切り替え',
-      switchAiMode: 'AIモードを切り替え'
+      switchAiMode: 'AIモードを切り替え',
+      aiSuggestCommand: 'AIコマンド提案'
     },
     hints: {
       sendOrToggleAi: 'AIとチャット',

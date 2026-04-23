@@ -98,6 +98,7 @@ export default {
     pleaseInputPrivateKey: 'Inserisci la chiave privata',
     localhost: 'Localhost',
     favoriteBar: 'Favoriti',
+    recentConnections: 'Connessioni recenti',
     executeCommandToAllWindows: 'Esegui comando in tutte le finestre',
     broadcastTo: 'Trasmetti a {count} terminali',
     reloadAliasDataFailed: 'Ricaricamento dati alias fallito',
@@ -641,7 +642,8 @@ export default {
       fontSizeDecrease: 'Diminuisci dimensione font',
       toggleLayout: 'Attiva layout (Terminal/Agents)',
       toggleAgentsLeftSidebar: 'Attiva sidebar agenti',
-      switchAiMode: 'Attiva modalità AI'
+      switchAiMode: 'Attiva modalità AI',
+      aiSuggestCommand: 'Suggerimento comando AI'
     },
     hints: {
       sendOrToggleAi: 'Chat con AI',

@@ -86,6 +86,7 @@ export default {
     pleaseInputPrivateKey: 'الرجاء إدخال المفتاح الخاص',
     localhost: 'المضيف المحلي',
     favoriteBar: 'المفضلة',
+    recentConnections: 'الاتصالات الأخيرة',
     executeCommandToAllWindows: 'تنفيذ الأوامر في جميع النوافذ',
     broadcastTo: 'توصيل إلى {count} التبويبات',
     reloadAliasDataFailed: 'خطأ في تحديث بيانات الألياس',
@@ -612,7 +613,8 @@ export default {
       fontSizeDecrease: 'تقليل الحجم الخط',
       toggleLayout: 'تبديل التخطيط (التبويب/الأجهزة)',
       toggleAgentsLeftSidebar: 'تبديل شريط الأجهزة الأيسر',
-      switchAiMode: 'تبديل وضع الذكاء الاصطناعي'
+      switchAiMode: 'تبديل وضع الذكاء الاصطناعي',
+      aiSuggestCommand: 'اقتراح أوامر الذكاء الاصطناعي'
     },
     hints: {
       sendOrToggleAi: 'الدردشة مع الذكاء الاصطناعي',

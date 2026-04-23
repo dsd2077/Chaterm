@@ -98,6 +98,7 @@ export default {
     pleaseInputPrivateKey: 'Please input private key',
     localhost: 'Localhost',
     favoriteBar: 'Favorites',
+    recentConnections: 'Recent Connections',
     executeCommandToAllWindows: 'Execute command to all windows',
     broadcastTo: 'Broadcast to {count} terminals',
     reloadAliasDataFailed: 'Failed to reload alias data',
@@ -635,7 +636,8 @@ export default {
       fontSizeDecrease: 'Font Size Decrease',
       toggleLayout: 'Toggle Layout (Terminal/Agents)',
       toggleAgentsLeftSidebar: 'Toggle Agents Left Sidebar',
-      switchAiMode: 'Switch AI Mode'
+      switchAiMode: 'Switch AI Mode',
+      aiSuggestCommand: 'AI Command Suggestion'
     },
     hints: {
       sendOrToggleAi: 'Chat With AI',
@@ -881,6 +883,7 @@ export default {
     searchHistoryPH: 'Please Input',
     loading: 'loading...',
     loadMore: 'load more',
+    historyLoadHint: 'Older messages are available. Scroll up to load them.',
     copyToClipboard: 'Copy to clipboard',
     retry: 'Retry',
     taskCompleted: 'Task Completed',

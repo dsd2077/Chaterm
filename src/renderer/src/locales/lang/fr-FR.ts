@@ -98,6 +98,7 @@ export default {
     pleaseInputPrivateKey: 'Veuillez saisir la clé privée',
     localhost: 'Localhost',
     favoriteBar: 'Favoris',
+    recentConnections: 'Connexions r\u00e9centes',
     executeCommandToAllWindows: 'Exécuter la commande dans toutes les fenêtres',
     broadcastTo: 'Diffuser vers {count} terminaux',
     reloadAliasDataFailed: "Échec du rechargement des données d'alias",
@@ -642,7 +643,8 @@ export default {
       fontSizeDecrease: 'Diminuer la taille de la police',
       toggleLayout: 'Basculer la disposition (Terminal/Agents)',
       toggleAgentsLeftSidebar: 'Basculer la barre latérale des agents',
-      switchAiMode: 'Basculer le mode AI'
+      switchAiMode: 'Basculer le mode AI',
+      aiSuggestCommand: 'Suggestion de commande AI'
     },
     hints: {
       sendOrToggleAi: 'Chat avec AI',

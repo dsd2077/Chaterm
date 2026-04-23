@@ -98,6 +98,7 @@ export default {
     pleaseInputPrivateKey: '请输入私钥',
     localhost: '本地主机',
     favoriteBar: '收藏栏',
+    recentConnections: '最近连接',
     executeCommandToAllWindows: '执行命令到全部窗口',
     broadcastTo: '广播到 {count} 个终端',
     reloadAliasDataFailed: '重新加载别名数据失败',
@@ -620,7 +621,8 @@ export default {
       fontSizeDecrease: '字体缩小',
       toggleLayout: '切换布局（Terminal/Agents）',
       toggleAgentsLeftSidebar: '切换Agents布局左侧边栏',
-      switchAiMode: '切换AI模式'
+      switchAiMode: '切换AI模式',
+      aiSuggestCommand: 'AI命令推荐'
     },
     hints: {
       sendOrToggleAi: '与AI对话',
@@ -864,6 +866,7 @@ export default {
     searchHistoryPH: '请输入',
     loading: '加载中...',
     loadMore: '加载',
+    historyLoadHint: '还有更早历史消息，向上滚动可继续加载',
     copyToClipboard: '已复制到剪贴板',
     retry: '重试',
     taskCompleted: '任务已完成',
