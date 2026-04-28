@@ -95,7 +95,7 @@ jobs:
     name: Build (macOS)
     runs-on: macos-latest
     needs: verify
-    environment: release
+    environment: chaterm
     env:
       CSC_LINK: ${{ secrets.MAC_CERT_BASE64 }}
       CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
