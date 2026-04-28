@@ -107,6 +107,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Validate macOS signing secrets
+        shell: bash
+        run: |
+          required_vars=(
+            CSC_LINK
+            CSC_KEY_PASSWORD
+            APPLE_ID
+            APPLE_APP_SPECIFIC_PASSWORD
+            APPLE_TEAM_ID
+          )
+
+          missing=()
+
+          for var in "${required_vars[@]}"; do
+            value="$(printf '%s' "${!var:-}" | tr -d '[:space:]')"
+            if [ -z "$value" ]; then
+              missing+=("$var")
+            fi
+          done
+
+          echo "macOS signing secret availability:"
+          echo "  CSC_LINK: $([ -n "$(printf '%s' "${CSC_LINK:-}" | tr -d '[:space:]')" ] && echo true || echo false)"
+          echo "  CSC_KEY_PASSWORD: $([ -n "$(printf '%s' "${CSC_KEY_PASSWORD:-}" | tr -d '[:space:]')" ] && echo true || echo false)"
+          echo "  APPLE_ID: $([ -n "$(printf '%s' "${APPLE_ID:-}" | tr -d '[:space:]')" ] && echo true || echo false)"
+          echo "  APPLE_APP_SPECIFIC_PASSWORD: $([ -n "$(printf '%s' "${APPLE_APP_SPECIFIC_PASSWORD:-}" | tr -d '[:space:]')" ] && echo true || echo false)"
+          echo "  APPLE_TEAM_ID: $([ -n "$(printf '%s' "${APPLE_TEAM_ID:-}" | tr -d '[:space:]')" ] && echo true || echo false)"
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Missing required macOS signing secret(s): ${missing[*]}" >&2
+            exit 1
+          fi
+
       - name: Use Node.js 22.x
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
         with:
