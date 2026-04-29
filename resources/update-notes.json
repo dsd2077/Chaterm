@@ -2,6 +2,22 @@
   "releaseNotesUrl": "https://github.com/chaterm/Chaterm/releases/tag/v",
   "versions": [
     {
+      "version": "0.10.3",
+      "date": "2026-04-29",
+      "highlights": {
+        "zh-CN": [
+          "主题与外观：新增官方主题适配，统一应用界面、终端与相关扩展场景的配色体验",
+          "发布流程：修复 macOS 发布环境绑定问题，并补齐发布阶段对构建产物与脚本的依赖关系，发布链路更完整稳定",
+          "构建诊断：新增 macOS 签名与公证凭据的前置校验，配置缺失时会更早给出明确错误，排查更直接"
+        ],
+        "en-US": [
+          "Themes and appearance: add official theme adaptation to align colors across the app UI, terminal views, and related extension scenarios",
+          "Release flow: fix macOS release environment binding and complete release-stage dependencies for build artifacts and scripts, making the publish pipeline more reliable",
+          "Build diagnostics: add preflight validation for macOS signing and notarization credentials so configuration issues fail earlier with clearer errors"
+        ]
+      }
+    },
+    {
       "version": "0.10.2",
       "date": "2026-04-28",
       "highlights": {
