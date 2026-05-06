@@ -2,6 +2,22 @@
   "releaseNotesUrl": "https://github.com/chaterm/Chaterm/releases/tag/v",
   "versions": [
     {
+      "version": "0.10.4",
+      "date": "2026-05-06",
+      "highlights": {
+        "zh-CN": [
+          "发布资产：GitHub Release 同时上传国内版与国外版安装包，并按平台提供 Linux、Windows、macOS x64 与 macOS arm64 产物",
+          "下载体验：拆分 Actions 构建中间产物为更小的平台包，降低手动下载与发布阶段传输失败概率",
+          "更新元数据：保留国内版与国外版的 latest 更新文件，避免不同版本渠道的自动更新信息互相覆盖"
+        ],
+        "en-US": [
+          "Release assets: GitHub Release now uploads both CN and global installers, with Linux, Windows, macOS x64, and macOS arm64 packages available by platform",
+          "Download experience: split Actions build artifacts into smaller platform packages to reduce manual download size and release transfer failures",
+          "Update metadata: keep separate latest update files for CN and global channels so auto-update metadata does not overwrite another edition"
+        ]
+      }
+    },
+    {
       "version": "0.10.3",
       "date": "2026-04-29",
       "highlights": {
