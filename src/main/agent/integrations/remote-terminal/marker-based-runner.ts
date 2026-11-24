@@ -196,8 +196,7 @@ export function runMarkerBasedCommand(config: MarkerRunnerConfig): Promise<Marke
     }
 
     const processLine = (line: string) => {
-      const processedLine = renderForDisplay(line)
-      const cleanLine = stripForDetect(processedLine).trim()
+      const cleanLine = stripForDetect(line).trim()
 
       // Filter command echo
       if (!commandStarted && !commandEchoFiltered && shouldFilterEcho(line)) {
@@ -245,7 +244,7 @@ export function runMarkerBasedCommand(config: MarkerRunnerConfig): Promise<Marke
       if (commandStarted && !commandCompleted) {
         // Allow empty lines but exclude marker lines
         if (!cleanLine.includes(startMarker) && !cleanLine.includes(endMarker) && !cleanLine.includes('===CHATERM_')) {
-          onLine(processedLine || '\n')
+          onLine(renderForDisplay(line) || '\n')
           onDetectorOutput?.(line + '\n')
         }
       }

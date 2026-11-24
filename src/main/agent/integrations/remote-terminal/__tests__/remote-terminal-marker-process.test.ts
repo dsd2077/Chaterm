@@ -25,7 +25,8 @@ vi.mock('electron', () => ({
 const mocks = vi.hoisted(() => ({
   shellStreams: new Map<string, unknown>(),
   jumpServerDisconnect: vi.fn(),
-  broadcastCommandActivity: vi.fn()
+  broadcastCommandActivity: vi.fn(),
+  registerCommandContext: vi.fn()
 }))
 
 vi.mock('../../../../ssh/agentHandle', () => ({
@@ -54,7 +55,7 @@ vi.mock('../jumpserverHandle', () => ({
 }))
 
 vi.mock('../../../services/interaction-detector/ipc-handlers', () => ({
-  registerCommandContext: vi.fn(),
+  registerCommandContext: mocks.registerCommandContext,
   unregisterCommandContext: vi.fn(),
   broadcastInteractionNeeded: vi.fn(),
   broadcastInteractionSuppressed: vi.fn(),
@@ -114,6 +115,72 @@ describe('RemoteTerminalProcess marker-based execution', () => {
     const { start, end } = markersOf(stream)
     stream.emitData(`${start}\r\n${end}:1\r\n`)
     await done
+  })
+
+  it.each(['<!--', '<m'])('completes when the end marker follows truncated HTML %s', async (prefix) => {
+    vi.useFakeTimers()
+    const { RemoteTerminalProcess } = await loadModule()
+    const stream = createShellStream()
+    const proc = new RemoteTerminalProcess()
+    const exitCode = vi.fn()
+    proc.on('exitCode', exitCode)
+
+    const done = proc.run('js-1', 'sleep 100', undefined, 'jumpserver')
+    const { start, end } = markersOf(stream)
+    stream.emitData(`${start}\r\n${prefix}${end}:0\r\n`)
+
+    expect(exitCode).toHaveBeenCalledWith(0)
+    await done
+  })
+
+  it('warns before finishing a cancelled command when Ctrl+C is ignored', async () => {
+    vi.useFakeTimers()
+    const { RemoteTerminalProcess } = await loadModule()
+    const stream = createShellStream()
+    const proc = new RemoteTerminalProcess()
+    const events: string[] = []
+    proc.on('line', (line) => events.push(line))
+    proc.once('interrupt-failed', () => events.push('interrupt-failed'))
+    proc.once('completed', () => events.push('completed'))
+    proc.enableInteractionDetection('task-1', 'sleep 100')
+
+    const done = proc.run('js-1', 'sleep 100', undefined, 'jumpserver')
+    const context = mocks.registerCommandContext.mock.calls[0][0] as {
+      cancel: () => Promise<{ success: boolean }>
+    }
+
+    await expect(context.cancel()).resolves.toEqual({ success: true })
+    expect(stream.write).toHaveBeenLastCalledWith('\x03')
+
+    await vi.advanceTimersByTimeAsync(9_999)
+    expect(events).toEqual([])
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(events).toEqual(['The command did not stop after Ctrl+C and may still be running on the server.', 'interrupt-failed', 'completed'])
+    await done
+  })
+
+  it('clears the cancellation timer when the command completes after Ctrl+C', async () => {
+    vi.useFakeTimers()
+    const { RemoteTerminalProcess } = await loadModule()
+    const stream = createShellStream()
+    const proc = new RemoteTerminalProcess()
+    const interruptFailed = vi.fn()
+    proc.once('interrupt-failed', interruptFailed)
+    proc.enableInteractionDetection('task-1', 'sleep 100')
+
+    const done = proc.run('js-1', 'sleep 100', undefined, 'jumpserver')
+    const context = mocks.registerCommandContext.mock.calls[0][0] as {
+      cancel: () => Promise<{ success: boolean }>
+    }
+
+    await context.cancel()
+    const { start, end } = markersOf(stream)
+    stream.emitData(`${start}\r\n${end}:130\r\n`)
+    await done
+    await vi.advanceTimersByTimeAsync(10_000)
+
+    expect(interruptFailed).not.toHaveBeenCalled()
   })
 
   it('appends a non-zero exit code to the output before completing', async () => {

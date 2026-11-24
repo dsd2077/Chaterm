@@ -101,7 +101,7 @@ export function broadcastCommandActivity(activity: CommandActivity): void {
 async function withCommandContext(
   commandId: string,
   actionName: string,
-  operation: (context: CommandContext) => void | Promise<void>
+  operation: (context: CommandContext) => void | Promise<void | InteractionSubmitResult>
 ): Promise<InteractionSubmitResult> {
   const context = Task.getCommandContext(commandId)
   if (!context) {
@@ -109,7 +109,10 @@ async function withCommandContext(
   }
 
   try {
-    await operation(context)
+    const result = await operation(context)
+    if (result && !result.success) {
+      return result
+    }
     logger.info(`[InteractionIpc] ${actionName} for command: ${commandId}`)
     return { success: true }
   } catch (error) {
@@ -199,10 +202,9 @@ export function setupInteractionIpcHandlers(): void {
   ipcMain.handle('cancel-interaction', async (_event, commandId: string): Promise<InteractionSubmitResult> => {
     return withCommandContext(commandId, 'Cancelled command', async (context) => {
       if (context.cancel) {
-        await context.cancel()
-      } else {
-        await context.sendInput('\x03')
+        return context.cancel()
       }
+      return context.sendInput('\x03')
     })
   })
 

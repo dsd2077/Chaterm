@@ -59,6 +59,22 @@ describe('interaction-detector ipc-handlers', () => {
     expect(result.success).toBe(false)
   })
 
+  it('returns the Ctrl+C write failure from the cancel handler', async () => {
+    const cancel = vi.fn().mockResolvedValue({ success: false, error: 'stream closed', code: 'closed' })
+
+    taskMock.getCommandContext.mockReturnValue({
+      commandId: 'cmd-1',
+      taskId: 'task-1',
+      cancel
+    })
+
+    const handler = handlers.get('cancel-interaction')!
+    const result = await handler({}, 'cmd-1')
+
+    expect(cancel).toHaveBeenCalled()
+    expect(result).toEqual({ success: false, error: 'stream closed', code: 'closed' })
+  })
+
   it('sends command activity to every window', async () => {
     const windows = [{ send: vi.fn() }, { send: vi.fn() }]
     webContentsMock.getAllWebContents.mockReturnValue(windows as any)

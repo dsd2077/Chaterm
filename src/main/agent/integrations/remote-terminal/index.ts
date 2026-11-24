@@ -291,6 +291,8 @@ export class RemoteTerminalProcess extends BrownEventEmitter<RemoteTerminalProce
   private lastOutputAt: number | null = null
   private lastActivityBroadcastAt = 0
   private activityBroadcastTimer: NodeJS.Timeout | null = null
+  private manualInterruptTimer: NodeJS.Timeout | null = null
+  private readonly MANUAL_INTERRUPT_GRACE_MS = 10_000
 
   constructor() {
     super()
@@ -321,9 +323,7 @@ export class RemoteTerminalProcess extends BrownEventEmitter<RemoteTerminalProce
       commandId: this.commandId,
       taskId: this.taskId,
       sendInput: (input: string) => this.sendInput(input),
-      cancel: async () => {
-        await this.sendInput('\x03')
-      },
+      cancel: () => this.cancel(),
       forceTerminate: () => this.forceTerminate(),
       onDismiss: () => detector.onDismiss(),
       onSuppress: () => detector.suppress(),
@@ -428,6 +428,10 @@ export class RemoteTerminalProcess extends BrownEventEmitter<RemoteTerminalProce
    * Clean up interaction detector
    */
   private cleanupInteractionDetector(): void {
+    if (this.manualInterruptTimer) {
+      clearTimeout(this.manualInterruptTimer)
+      this.manualInterruptTimer = null
+    }
     if (this.interactionDetector) {
       unregisterCommandContext(this.commandId)
       broadcastInteractionClosed(this.commandId)
@@ -435,6 +439,33 @@ export class RemoteTerminalProcess extends BrownEventEmitter<RemoteTerminalProce
       this.interactionDetector.dispose()
       this.interactionDetector = null
     }
+  }
+
+  /**
+   * Send Ctrl+C and force the command session closed if it does not finish promptly.
+   */
+  async cancel(): Promise<SendInputResult> {
+    const result = await this.sendInput('\x03')
+    if (!result.success || !this.interactionDetector) {
+      return result
+    }
+
+    if (this.manualInterruptTimer) {
+      clearTimeout(this.manualInterruptTimer)
+    }
+    this.manualInterruptTimer = setTimeout(() => {
+      this.manualInterruptTimer = null
+      logger.warn('Command did not stop after Ctrl+C', {
+        event: 'remote-terminal.manual.interrupt.failed',
+        commandId: this.commandId,
+        graceMs: this.MANUAL_INTERRUPT_GRACE_MS
+      })
+      this.emit('line', 'The command did not stop after Ctrl+C and may still be running on the server.')
+      this.emit('interrupt-failed')
+      this.forceTerminate()
+    }, this.MANUAL_INTERRUPT_GRACE_MS)
+
+    return result
   }
 
   /**
@@ -825,7 +856,7 @@ export class RemoteTerminalProcess extends BrownEventEmitter<RemoteTerminalProce
       logPrefix,
       timeoutMs: this.JUMPSERVER_COMMAND_TIMEOUT,
       isListening: () => this.isListening,
-      stripForDetect: (v) => stripHtmlLikeTags(processAnsiCodes(v)),
+      stripForDetect: stripAnsiSimple,
       renderForDisplay: processAnsiCodes,
       shouldFilterEcho: isCommandEcho,
       onLine: (line) => this.emit('line', line),

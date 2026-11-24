@@ -94,7 +94,7 @@ import { LocalTerminalManager, LocalCommandProcess } from '../../integrations/lo
 import { getK8sAgentManager } from '../../integrations/k8s'
 import { createExperienceManager } from '../../services/experience'
 import { createLlmCaller } from '../../services/interaction-detector/llm-caller'
-import type { InteractionResult } from '../../services/interaction-detector/types'
+import type { InteractionResult, SendInputResult } from '../../services/interaction-detector/types'
 import { getFormatResponse } from '@core/prompts/responses'
 import { addUserInstructions, selectSystemPrompt } from '@core/prompts/system'
 import { getSwitchPromptByAssetType } from '@core/prompts/switch-prompts'
@@ -157,8 +157,8 @@ export interface CommandContext {
   taskId: string
   /** Function to send input to the command */
   sendInput: (input: string) => Promise<import('../../services/interaction-detector/types').SendInputResult>
-  /** Function to cancel the command (async, may throw) */
-  cancel?: () => Promise<void> | void
+  /** Function to cancel the command and report whether Ctrl+C was written */
+  cancel?: () => Promise<SendInputResult> | SendInputResult
   /** Function to force terminate the process and resolve/reject its Promise */
   forceTerminate?: () => void
   /** Function called when interaction is dismissed */
